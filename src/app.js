@@ -30,22 +30,14 @@ app.use(morgan(morganOption))
 app.use(cors())
 app.use(helmet())
 
-const bookmarks = [
-    {
-        id: 1,
-        title: "Bookmark Title 1",
-        url: "bookmark1.url",
-        description: "Bookmark1 description",
-        rating: 5
-    },
-    {
-        id: 2,
-        title: "Bookmark Title 2",
-        url: "bookmark2.url",
-        description: "Bookmark2 description",
-        rating: 3
-    }
-];
+const bookmarks = {
+    id: 1,
+    title: "Bookmark Title 1",
+    url: "bookmark1.url",
+    description: "Bookmark1 description",
+    rating: 5
+};
+    
 
 app.use(function validateBearerToken(req, res, next) {
     const apiToken = process.env.API_TOKEN;
@@ -68,7 +60,10 @@ app.get('/bookmarks', (req, res) => {
 
 app.get('/bookmarks/:id', (req, res) => {
     const { id } = req.params;
-    const bookmark = bookmark.find(bm => bm.id === id);
+    const bookmark = bookmarks.find(bm => {
+        console.log(bm)
+        bm.id === id});
+    console.log(bookmark)
     
     if (!bookmark) {
         logger.error(`Bookmark with id ${id} not found`);
