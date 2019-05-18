@@ -1,10 +1,12 @@
-# Express Boilerplate!
+# Bookmarks Server!
 
-This is a boilerplate project used for starting new projects!
+This is a completed version of TF exercise 10 for 'organizing your server'
 
-## Set up
 
-Complete the following steps to start a new project (NEW-PROJECT-NAME):
+
+## Set up (using boiler plate)
+
+Complete the following steps to start a new project (bookmarks-server):
 
 1. Clone this repository to your local machine `git clone BOILERPLATE-URL NEW-PROJECTS-NAME`
 2. `cd` into the cloned repository
