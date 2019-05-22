@@ -31,6 +31,23 @@ bookmarksRouter
                 .send('Invalid data');
         }
 
+        const re = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/;
+        const urlTest = re.test(url)
+
+        if (!urlTest) {
+            logger.error('Valid Url is required');
+            return res
+                .status(400)
+                .send('Invalid data');
+        }
+
+        if (rating > 5 || rating === 0) {
+            logger.error('Rating must be between 1 - 5');
+            return res
+                .status(400)
+                .send('Invalid data');
+        }
+
         //if title and url exist, create an id
         const id = uuid();
 
