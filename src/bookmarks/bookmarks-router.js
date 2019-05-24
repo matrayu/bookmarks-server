@@ -1,5 +1,6 @@
 const express = require('express');
 const uuid = require('uuid/v4');
+const valid = require('validator');
 const logger = require('../logger');
 const { bookmarks } = require('../store');
 
@@ -31,9 +32,9 @@ bookmarksRouter
                 .send('Invalid data');
         }
 
-        const re = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/;
-        const urlTest = re.test(url)
+        const urlTest = valid.isURL(url)
 
+        //if the url is not valid log and return an error
         if (!urlTest) {
             logger.error('Valid Url is required');
             return res
@@ -41,7 +42,16 @@ bookmarksRouter
                 .send('Invalid data');
         }
 
-        if (rating > 5 || rating === 0) {
+        //if the rating is not a number log and return an error
+        if (isNaN(rating)) {
+            logger.error('Rating must be a number');
+            return res
+                .status(400)
+                .send('Invalid data');
+        }
+
+        //if the rating is not between 1 & 5 log and return an error
+        if (rating > 5 || rating === 0 ) {
             logger.error('Rating must be between 1 - 5');
             return res
                 .status(400)
