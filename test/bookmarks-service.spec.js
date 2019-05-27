@@ -1,4 +1,4 @@
-const fixtures = require('./bookmarks.fixtures')
+const {makeBookmarksArray} = require('./bookmarks.fixtures')
 const knex = require('knex');
 const app = require('../src/app');
 
@@ -20,7 +20,7 @@ describe(`Bookmarks Endpoints`, function() {
     afterEach('cleanup', () => db('bookmarks').truncate())
 
     describe(`Unauthorized requests`, () => {
-        const testBookmarks = fixtures.makeBookmarksArray()
+        const testBookmarks = makeBookmarksArray()
 
         beforeEach('insert bookmarks', () => {
             return db
@@ -42,12 +42,12 @@ describe(`Bookmarks Endpoints`, function() {
                 return supertest(app)
                     .get('/bookmarks')
                     .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
-                    .expect(200)
+                    .expect(200, [])
             })
         })
 
         context('Given there are bookmarks in the database', () => {
-            const testBookmarks = fixtures.makeBookmarksArray();
+            const testBookmarks = makeBookmarksArray()
 
             beforeEach('insert bookmarks', () => {
                 return db
@@ -66,7 +66,7 @@ describe(`Bookmarks Endpoints`, function() {
 
 
     describe(`GET /bookmarks/:bookmarks_id`, () => {
-        context('Given no articles', () => {
+        context('Given no bookmarks', () => {
             it('responds with a 404 and error', () => {
                 const bookmarkId = 123456
                 return supertest(app)
@@ -81,7 +81,7 @@ describe(`Bookmarks Endpoints`, function() {
         })
 
         context('Given there are bookmarks in the database', () => {
-            const testBookmarks = fixtures.makeBookmarksArray();
+            const testBookmarks = makeBookmarksArray()
 
             beforeEach('insert bookmarks', () => {
                 return db
