@@ -42,20 +42,12 @@ bookmarksRouter
                 .send('Invalid data');
         }
 
-        //if the rating is not a number log and return an error
-        if (isNaN(rating)) {
-            logger.error('Rating must be a number');
-            return res
-                .status(400)
-                .send('Invalid data');
-        }
-
         //if the rating is not between 1 & 5 log and return an error
-        if (rating > 5 || rating === 0 ) {
-            logger.error('Rating must be between 1 - 5');
+        if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+            logger.error(`Invalid rating '${rating}' supplied`);
             return res
                 .status(400)
-                .send('Invalid data');
+                .send('Rating must be between 1 - 5');
         }
 
         //if title and url exist, create an id
