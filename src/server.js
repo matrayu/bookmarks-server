@@ -7,6 +7,8 @@ const db = knex({
   connection: DB_URL,
 })
 
+//Using app.set('property-name', 'property-value') we can set 
+//a property called 'db' and set the Knex instance as the value.
 app.set('db', db)
 
 app.listen(PORT, () => {
