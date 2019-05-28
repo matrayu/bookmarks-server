@@ -1,15 +1,13 @@
 const express = require('express');
-const uuid = require('uuid/v4');
 const valid = require('validator');
 const logger = require('../logger');
-/* const { bookmarks } = require('../store'); */
-const BookmarksService = require('../bookmarks-service');
+const BookmarksService = require('./bookmarks-service');
 
 const bookmarksRouter = express.Router();
-const bodyParser = express.json();
+const jsonParser = express.json();
 
 bookmarksRouter
-    .route('/bookmarks')
+    .route('/')
     .get((req, res, next) => {
         const knexInstance = req.app.get('db')
         BookmarksService.getAllBookmarks(knexInstance)
@@ -18,24 +16,21 @@ bookmarksRouter
             })
             .catch(next)
     })
-    .post(bodyParser, (req, res) => {
-        //get data from body
-        const { title, url, description, rating } = req.body;
-
-        //if there's no title, log and return an error
-        if (!title) {
-            logger.error('Title is required');
-            return res
-                .status(400)
-                .send('Invalid data');
-        }
-
-        //if there's no url log and return an error
-        if (!url) {
-            logger.error('Url is required');
-            return res
-                .status(400)
-                .send('Invalid data');
+    .post(jsonParser, (req, res, next) => {
+        const knexInstance = req.app.get('db')
+        /* const id = uuid(); */
+        const { title, url, description, rating } = req.body; //get data from body
+        const newBookmark = { title, url, description, rating }; //create new bookmark from request body
+        //check for required fields and send an error if missing
+        for (const [key, value] of Object.entries(newBookmark)) {
+            if (value == null) {
+                logger.error(`${key} value is empty`)
+                return res
+                    .status(400)
+                    .send({
+                        error: `Missing ${key} in the request body`
+                    })
+            }
         }
 
         const urlTest = valid.isURL(url)
@@ -45,9 +40,9 @@ bookmarksRouter
             logger.error('Valid Url is required');
             return res
                 .status(400)
-                .send('Invalid data');
+                .send('Valid Url is required');
         }
-
+ 
         //if the rating is not between 1 & 5 log and return an error
         if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
             logger.error(`Invalid rating '${rating}' supplied`);
@@ -56,45 +51,26 @@ bookmarksRouter
                 .send('Rating must be between 1 - 5');
         }
 
-        //if title and url exist, create an id
-        const id = uuid();
-
-        //construct the bookmark object
-        const bookmark = {
-            id,
-            title,
-            url,
-            description,
-            rating
-        };
-
-        //add the bookmark to the exisiting bookmarks
-        /* bookmarks.push(bookmark); */
-
-        //log that a bookmark was created along with its id
-        logger.info(`Bookmark with id ${id} created`);
-
-        //return a response with a status, location, and json payload
-        res
-            .status(201)
-            .location(`http://localhost:8000/bookmarks/${id}`)
-            .json(bookmark);
-
+        BookmarksService.insertBookmark(knexInstance, newBookmark)
+            .then(bookmark => {
+                //log that a bookmark was created along with its id
+                logger.info(`Bookmark with id ${bookmark.id} created`);
+                
+                //return a response with a status, location, and json payload
+                res
+                    .status(201)
+                    .location(`/bookmarks/${bookmark.id}`)
+                    .json(bookmark);
+            })
+            .catch(next)
     });
 
 bookmarksRouter
-    .route('/bookmarks/:id')
+    .route('/:id')
     .get((req, res, next) => {
         const knexInstance = req.app.get('db')
         const { id } = req.params;
-        /* const bookmark = bookmarks.find(bm => bm.id == id);
-        console.log(bookmark, )
-        if (!bookmark) {
-            logger.error(`Bookmark with id ${id} not found`);
-            return res
-                .status(404)
-                .send(`Bookmark with id ${id} not found`);
-        } */
+
         BookmarksService.getById(knexInstance, id)
             .then(bookmark => {
                 if (!bookmark) {
