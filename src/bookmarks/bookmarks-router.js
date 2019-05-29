@@ -2,9 +2,18 @@ const express = require('express');
 const valid = require('validator');
 const logger = require('../logger');
 const BookmarksService = require('./bookmarks-service');
+const xss = require('xss');
 
 const bookmarksRouter = express.Router();
 const jsonParser = express.json();
+
+const sterileBookmark = bookmark => ({
+    id: bookmark.id,
+    title: xss(bookmark.title),
+    description: xss(bookmark.description),
+    url: bookmark.url,
+    rating: bookmark.rating,
+})
 
 bookmarksRouter
     .route('/')
@@ -12,7 +21,7 @@ bookmarksRouter
         const knexInstance = req.app.get('db')
         BookmarksService.getAllBookmarks(knexInstance)
             .then(bookmarks => {
-                res.json(bookmarks)
+                res.json(bookmarks.map(sterileBookmark))
             })
             .catch(next)
     })
@@ -20,9 +29,9 @@ bookmarksRouter
         const knexInstance = req.app.get('db')
         /* const id = uuid(); */
         const { title, url, description, rating } = req.body; //get data from body
-        const newBookmark = { title, url, description, rating }; //create new bookmark from request body
+        const newBookmark = { title, url, rating, description }; //create new bookmark from request body
         //check for required fields and send an error if missing
-        for (const [key, value] of Object.entries(newBookmark)) {
+        for (const [ key, value ] of Object.entries(newBookmark)) {
             if (value == null) {
                 logger.error(`${key} value is empty`)
                 return res
@@ -60,48 +69,48 @@ bookmarksRouter
                 res
                     .status(201)
                     .location(`/bookmarks/${bookmark.id}`)
-                    .json(bookmark);
+                    .json(sterileBookmark(bookmark));
             })
             .catch(next)
     });
 
 bookmarksRouter
-    .route('/:id')
-    .get((req, res, next) => {
+    .route('/:bookmark_id')
+    .all((req, res, next) => {
         const knexInstance = req.app.get('db')
-        const { id } = req.params;
+        const { bookmark_id } = req.params;
 
-        BookmarksService.getById(knexInstance, id)
+        BookmarksService.getById(knexInstance, bookmark_id)
             .then(bookmark => {
                 if (!bookmark) {
-                    logger.error(`Bookmark with id ${id} not found`);
-                    return res.status(404).json({
-                        error: {
-                            message: `Bookmark with id ${id} not found`
+                    logger.error(`Bookmark with id ${bookmark_id} not found`);
+                    return res
+                        .status(404)
+                        .json({
+                            error: `Bookmark with id ${bookmark_id} not found`
                         }
-                    });
+                    )
                 }
-                res.json(bookmark);
+                res.bookmark = bookmark
+                next()
             })
             .catch(next)
         
     })
-    .delete((req, res) => {
-        const { id } = req.params;
-        const bookmarkIndex = bookmarks.findIndex(bm => bm.id == id);
+    .get((req, res, next) => {
+        res.json(sterileBookmark(res.bookmark))
+    })
+    .delete((req, res, next) => {
+        const knexInstance = req.app.get('db');
+        const { bookmark_id } = req.params;
 
-        if (bookmarkIndex === -1) {
-            logger.error(`Bookmark with id ${id} not found`);
-            return res
-                .status(404)
-                .send(`Bookmark with id ${id} not found`);
-        }
-
-        bookmarks.splice(bookmarkIndex, 1);
-
-        logger.info(`Bookmark with id ${id} deleted`);
-
-        res.status(204).end();
+        BookmarksService.deleteBookmark(knexInstance, bookmark_id)
+            .then(() => {
+                logger.info(`Bookmark with id ${bookmark_id} deleted`);
+                res.status(204)
+                    .end()
+            })
+            .catch(next)
     });
 
 module.exports = bookmarksRouter;
