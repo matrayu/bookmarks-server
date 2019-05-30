@@ -22,7 +22,8 @@ bookmarksRouter
         const knexInstance = req.app.get('db')
         BookmarksService.getAllBookmarks(knexInstance)
             .then(bookmarks => {
-                res.json(bookmarks.map(sterileBookmark))
+                res
+                    .json(bookmarks.map(sterileBookmark))
             })
             .catch(next)
     })
@@ -65,7 +66,6 @@ bookmarksRouter
             .then(bookmark => {
                 //log that a bookmark was created along with its id
                 logger.info(`Bookmark with id ${bookmark.id} created`);
-                
                 //return a response with a status, location, and json payload
                 res
                     .status(201)
@@ -108,10 +108,39 @@ bookmarksRouter
         BookmarksService.deleteBookmark(knexInstance, bookmark_id)
             .then(() => {
                 logger.info(`Bookmark with id ${bookmark_id} deleted`);
-                res.status(204)
+                res
+                    .status(204)
                     .end()
             })
             .catch(next)
-    });
+    })
+    .patch(jsonParser, (req, res, next) => {
+        /* res.status(204).end() */
+        const knexInstance = req.app.get('db');
+        const { bookmark_id } = req.params;
+        const { title, url, description, rating } = req.body;
+        const bookmarkToPatch = { title, url, description, rating };
+
+        const numOfValue = Object.values(bookmarkToPatch).filter(Boolean).length
+
+        if (numOfValue === 0) {
+            logger.error(`Request body must contain either 'title', 'url', 'rating' or 'description'`)
+            return res
+                .status(400)
+                .json({
+                    error: `Request body must contain either 'title', 'url', 'rating' or 'description'`
+                })
+        }
+
+        BookmarksService.patchBookmark(knexInstance, bookmark_id, bookmarkToPatch)
+            .then(bookmark => {
+                logger.info(`Bookmark with id ${bookmark_id} has been patched`)
+                res
+                    .status(204)
+                    .location(path.posix.join(req.originalUrl, `/${bookmark.id}`))
+                    .end()
+            })
+            .catch(next)
+    })
 
 module.exports = bookmarksRouter;
