@@ -31,15 +31,21 @@ function makeMaliciousBookmark() {
         url: 'http:\/\/www.nba.com',
         description: 'Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.',
         rating: 3
+    } 
+    const maliciousBookmarkPatch = {
+        title: 'Naughty naughty very naughty <script>alert("xss");</script>',
+        description: 'Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.'
     }
     const expectedBookmark = {
         ...maliciousBookmark,
+        rating: '3',
         title: 'Naughty naughty very naughty &lt;script&gt;alert(\"xss\");&lt;/script&gt;',
         description: 'Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.',
     }
     return {
         maliciousBookmark,
-        expectedBookmark,
+        expectedBookmark, 
+        maliciousBookmarkPatch
     }
 }
 
