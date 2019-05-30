@@ -107,7 +107,7 @@ describe(`Bookmarks Endpoints`, function() {
         })
     })
 
-    describe(`GET /api/bookmarks/:bookmarks_id`, () => {
+    describe(`GET /api/bookmarks/:bookmark_id`, () => {
         context('Given no bookmarks', () => {
             it('responds with a 404 and error', () => {
                 const bookmarkId = 123456
@@ -239,7 +239,7 @@ describe(`Bookmarks Endpoints`, function() {
         })
     })
 
-    describe('DELETE /api/bookmarks/:bookmarks_id', () => {
+    describe('DELETE /api/bookmarks/:bookmark_id', () => {
         context('Given no bookmark exists', () => {
             it('Responds with a 404 error', () => {
                 const bookmarkId = 12345;
@@ -273,6 +273,82 @@ describe(`Bookmarks Endpoints`, function() {
                             .get(`/api/bookmarks`)
                             .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
                             .expect(expectedBookmarks))
+            })
+        })
+    })
+
+    describe('PATCH /api/bookmarks/:bookmarks_id', () => {
+        context('Given there are no bookmarks found', () => {
+            it('responds with a 404 and error', () => {
+                const bookmarkId = 123456
+                return supertest(app)
+                    .get(`/api/bookmarks/${bookmarkId}`)
+                    .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+                    .expect(404, { 
+                        error: `Bookmark with id ${bookmarkId} not found`
+                    })
+            })
+        })
+
+        context('Given there are bookmarks in the database', () => {
+            const testBookmarks = makeBookmarksArray()
+
+            beforeEach('insert bookmarks', () => {
+                return db
+                    .into('bookmarks')
+                    .insert(testBookmarks)
+            })
+
+            it('responds with 201 and patches the specified bookmark', () => {
+                const bookmarkIdToPatch = 2;
+                
+                const patchedBookmark = {
+                    title: 'Patched Title',
+                    url: "http://www.patchedUrl.com",
+                    description: "Patched Description"
+                };
+
+                const expectedBookmark = {
+                    ...testBookmarks[bookmarkIdToPatch - 1],
+                    ...patchedBookmark
+                }
+
+                return supertest(app)
+                    .patch(`/api/bookmarks/${bookmarkIdToPatch}`)
+                    .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+                    .send(patchedBookmark)
+                    .expect(204)
+                    .then(res => 
+                        supertest(app)
+                            .get(`/api/bookmarks/${bookmarkIdToPatch}`)
+                            .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+                            .expect(expectedBookmark)
+                    )
+            })
+        })
+
+        context('Given an XXS attack bookmark', () => {
+            const { maliciousBookmark, maliciousBookmarkPatch, expectedBookmark } = makeMaliciousBookmark();
+
+            beforeEach('insert malicious bookmark patch', () => {
+                return db
+                    .into('bookmarks')
+                    .insert([ maliciousBookmark ])
+            })
+
+            it('removes XXS attack content', () => {
+                const idToPatch = 911
+                return supertest(app)
+                    .patch(`/api/bookmarks/${idToPatch}`)
+                    .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+                    .send(maliciousBookmarkPatch)
+                    .expect(204)
+                    .then(res => 
+                        supertest(app)
+                            .get(`/api/bookmarks/${idToPatch}`)
+                            .set('Authorization', `Bearer ${process.env.API_TOKEN}`)
+                            .expect(expectedBookmark)
+                    )
             })
         })
     })
