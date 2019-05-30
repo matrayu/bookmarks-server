@@ -3,6 +3,7 @@ const valid = require('validator');
 const logger = require('../logger');
 const BookmarksService = require('./bookmarks-service');
 const xss = require('xss');
+const path = require('path');
 
 const bookmarksRouter = express.Router();
 const jsonParser = express.json();
@@ -68,7 +69,7 @@ bookmarksRouter
                 //return a response with a status, location, and json payload
                 res
                     .status(201)
-                    .location(`/bookmarks/${bookmark.id}`)
+                    .location(path.posix.join(req.originalUrl, `/${bookmark.id}`))
                     .json(sterileBookmark(bookmark));
             })
             .catch(next)
