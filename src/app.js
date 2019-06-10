@@ -5,7 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const bookmarksRouter = require('./bookmarks/bookmarks-router');
 /* const logger = require('./logger'); */
-const { NODE_ENV, DB_URL } = require('./config');
+const { NODE_ENV } = require('./config');
 
 const app = express();
 
@@ -31,7 +31,6 @@ app.use('/api/bookmarks', bookmarksRouter);
 
 app.use((error, req, res, next) => {
     let response
-    console.log(DB_URL, 'DB')
     if (NODE_ENV === 'production') {
         response = { error: { message: 'server error' }}
     } else {

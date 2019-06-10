@@ -4,7 +4,6 @@ const logger = require('../logger');
 const BookmarksService = require('./bookmarks-service');
 const xss = require('xss');
 const path = require('path');
-const { DB_URL } = require('../config');
 
 const bookmarksRouter = express.Router();
 const jsonParser = express.json();
@@ -30,9 +29,10 @@ bookmarksRouter
     })
     .post(jsonParser, (req, res, next) => {
         const knexInstance = req.app.get('db')
-        /* const id = uuid(); */
-        const { title, url, description, rating } = req.body; //get data from body
-        const newBookmark = { title, url, rating, description }; //create new bookmark from request body
+        //get data from body
+        const { title, url, description, rating } = req.body; 
+        //create new bookmark from request body
+        const newBookmark = { title, url, rating, description }; 
         //check for required fields and send an error if missing
         for (const [ key, value ] of Object.entries(newBookmark)) {
             if (value == null) {
