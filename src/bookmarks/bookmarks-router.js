@@ -4,6 +4,7 @@ const logger = require('../logger');
 const BookmarksService = require('./bookmarks-service');
 const xss = require('xss');
 const path = require('path');
+const { DB_URL } = require('../config');
 
 const bookmarksRouter = express.Router();
 const jsonParser = express.json();

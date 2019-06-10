@@ -4,8 +4,8 @@ const morgan = require('morgan');
 const cors = require('cors');
 const helmet = require('helmet');
 const bookmarksRouter = require('./bookmarks/bookmarks-router');
-const logger = require('./logger');
-const { NODE_ENV } = require('./config');
+/* const logger = require('./logger'); */
+const { NODE_ENV, DB_URL } = require('./config');
 
 const app = express();
 
@@ -17,7 +17,7 @@ app.use(morgan(morganOption));
 app.use(cors());
 app.use(helmet());
     
-app.use(function validateBearerToken(req, res, next) {
+/* app.use(function validateBearerToken(req, res, next) {
     const apiToken = process.env.API_TOKEN;
     const authToken = req.get('Authorization')
     if (!authToken || authToken.split(' ')[1] !== apiToken) {
@@ -25,12 +25,13 @@ app.use(function validateBearerToken(req, res, next) {
         return res.status(401).json({ error: 'Unauthorized request' });
     }
     next()
-});
+}); */
 
 app.use('/api/bookmarks', bookmarksRouter);
 
 app.use((error, req, res, next) => {
     let response
+    console.log(DB_URL, 'DB')
     if (NODE_ENV === 'production') {
         response = { error: { message: 'server error' }}
     } else {
